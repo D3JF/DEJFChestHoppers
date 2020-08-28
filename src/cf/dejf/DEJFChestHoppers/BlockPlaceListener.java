@@ -24,22 +24,25 @@ public class BlockPlaceListener extends BlockListener {
      */
 
 
-
     @Override
     public void onBlockPlace(BlockPlaceEvent event) {
-        Player player = event.getPlayer();
-        Block block = event.getBlock();
-        Block blockBelow = block.getLocation().subtract(0, 1, 0).getBlock();
-        Block blockAbove = block.getLocation().add(0, 1, 0).getBlock();
+        if (event.isCancelled())
+            return;
 
-        if(block.getType() == Material.CHEST && blockBelow.getType() == Material.IRON_BLOCK){
+        Player player = event.getPlayer();
+
+        Block block = event.getBlock();
+        Block blockBelow = event.getBlock().getWorld().getBlockAt(event.getBlock().getX(), event.getBlock().getY() - 1, event.getBlock().getZ());
+        Block blockAbove = event.getBlock().getWorld().getBlockAt(event.getBlock().getX(), event.getBlock().getY() + 1, event.getBlock().getZ());
+
+        if (block.getType() == Material.CHEST && blockBelow.getType() == Material.IRON_BLOCK) {
             player.sendMessage(ChatColor.YELLOW + "Hopper created!");
-            DEJFChestHoppers.hopperList.add(block);
+            DEJFChestHoppers.hopperList.add(block.getLocation());
             SaveList.save("hoppers");
 
-        } else if(block.getType() == Material.IRON_BLOCK && blockAbove.getType() == Material.CHEST) {
+        } else if (block.getType() == Material.IRON_BLOCK && blockAbove.getType() == Material.CHEST) {
             player.sendMessage(ChatColor.YELLOW + "Hopper created!");
-            DEJFChestHoppers.hopperList.add(blockAbove);
+            DEJFChestHoppers.hopperList.add(blockAbove.getLocation());
             SaveList.save("hoppers");
         }
     }

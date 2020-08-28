@@ -8,8 +8,9 @@ import java.util.Map;
 
 public class ModConfig {
     private static Map<String, Configuration> configDict = new HashMap<>();
+
     public static Configuration getPluginConfig(String config) {
-        if(configDict.containsKey(config))
+        if (configDict.containsKey(config))
             return configDict.get(config);
         File file = new File(DEJFChestHoppers.getInstance().getDataFolder(), config);
         Configuration c = new Configuration(file);
@@ -28,7 +29,7 @@ public class ModConfig {
     }
 
     public static void addDefault(Configuration c, String object, Object value) {
-        if(c.getProperty(object) == null)
+        if (c.getProperty(object) == null)
             addTo(c, object, value);
     }
 
