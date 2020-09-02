@@ -1,5 +1,7 @@
-package cf.dejf.DEJFChestHoppers;
+package cf.dejf.DEJFChestHoppers.listeners;
 
+import cf.dejf.DEJFChestHoppers.DEJFChestHoppers;
+import cf.dejf.DEJFChestHoppers.ConfigurationManager;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -38,12 +40,12 @@ public class BlockPlaceListener extends BlockListener {
         if (block.getType() == Material.CHEST && blockBelow.getType() == Material.IRON_BLOCK) {
             player.sendMessage(ChatColor.YELLOW + "Hopper created!");
             DEJFChestHoppers.hopperList.add(block.getLocation());
-            SaveList.save("hoppers");
+            ConfigurationManager.save("hoppers");
 
         } else if (block.getType() == Material.IRON_BLOCK && blockAbove.getType() == Material.CHEST) {
             player.sendMessage(ChatColor.YELLOW + "Hopper created!");
             DEJFChestHoppers.hopperList.add(blockAbove.getLocation());
-            SaveList.save("hoppers");
+            ConfigurationManager.save("hoppers");
         }
     }
 

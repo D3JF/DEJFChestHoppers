@@ -6,7 +6,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ModConfig {
+public class ConfigurationManagerUtil {
     private static Map<String, Configuration> configDict = new HashMap<>();
 
     public static Configuration getPluginConfig(String config) {

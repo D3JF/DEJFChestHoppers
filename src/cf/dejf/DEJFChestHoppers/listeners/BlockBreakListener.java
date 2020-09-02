@@ -1,5 +1,7 @@
-package cf.dejf.DEJFChestHoppers;
+package cf.dejf.DEJFChestHoppers.listeners;
 
+import cf.dejf.DEJFChestHoppers.DEJFChestHoppers;
+import cf.dejf.DEJFChestHoppers.ConfigurationManager;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -24,11 +26,11 @@ public class BlockBreakListener extends BlockListener {
         if (block.getType() == Material.CHEST && blockBelow.getType() == Material.IRON_BLOCK) {
             player.sendMessage(ChatColor.YELLOW + "Hopper destroyed!");
             removeBlock(block.getLocation());
-            SaveList.save("hoppers");
+            ConfigurationManager.save("hoppers");
         } else if (block.getType() == Material.IRON_BLOCK && blockAbove.getType() == Material.CHEST) {
             player.sendMessage(ChatColor.YELLOW + "Hopper destroyed!");
             removeBlock(blockAbove.getLocation());
-            SaveList.save("hoppers");
+            ConfigurationManager.save("hoppers");
         }
     }
 
@@ -37,7 +39,7 @@ public class BlockBreakListener extends BlockListener {
             Location location2 = DEJFChestHoppers.hopperList.get(i);
             if (location.getWorld() == location2.getWorld() && location.getBlockX() == location2.getBlockX() && location.getBlockY() == location2.getBlockY() && location.getBlockZ() == location2.getBlockZ()) {
                 DEJFChestHoppers.hopperList.remove(i);
-                SaveList.save("hoppers");
+                ConfigurationManager.save("hoppers");
             }
         }
     }

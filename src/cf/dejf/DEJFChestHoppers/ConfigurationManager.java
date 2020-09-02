@@ -3,7 +3,6 @@ package cf.dejf.DEJFChestHoppers;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.block.Block;
 import org.bukkit.util.config.Configuration;
 
 import java.util.ArrayList;
@@ -12,10 +11,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
-public class SaveList {
+public class ConfigurationManager {
 
     public static void save(String configName) {
-        Configuration config = ModConfig.getPluginConfig(configName + ".config");
+        Configuration config = ConfigurationManagerUtil.getPluginConfig(configName + ".config");
         Map<String, Map<String, Object>> listList = new HashMap<>();
         for (int i = 0; i < DEJFChestHoppers.hopperList.size(); i++) {
             Location location = DEJFChestHoppers.hopperList.get(i);
@@ -31,10 +30,20 @@ public class SaveList {
     }
 
     public static void load(String configName) {
-        Configuration config = ModConfig.getPluginConfig(configName + ".config");
+        Configuration config = ConfigurationManagerUtil.getPluginConfig(configName + ".config");
         if (config.getNode("hopperList") == null) {
             return;
         }
+        if (config.getProperty("refreshRate") == null) {
+            DEJFChestHoppers.refreshRate = 20L;
+            config.setProperty("refreshRate", 20L);
+            config.save();
+        }
+        long refreshRate = (long) (int) config.getProperty("refreshRate");
+        if(refreshRate < 20L) {
+            DEJFChestHoppers.getInstance().log(Level.WARNING, "Refresh rate is set below 20 ticks. This may cause severe slowdown!");
+        }
+        DEJFChestHoppers.refreshRate = refreshRate;
         List<String> strings = config.getKeys("hopperList");
         for (String s : strings) {
             String worldName = config.getNode("hopperList").getNode(s).getString("world", "world");
