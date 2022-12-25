@@ -1,5 +1,6 @@
-package cf.dejf.DEJFChestHoppers;
+package cf.dejf.DEJFChestHoppers.util;
 
+import cf.dejf.DEJFChestHoppers.DEJFChestHoppers;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;

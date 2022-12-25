@@ -2,6 +2,10 @@ package cf.dejf.DEJFChestHoppers;
 
 import cf.dejf.DEJFChestHoppers.listeners.BlockBreakListener;
 import cf.dejf.DEJFChestHoppers.listeners.BlockPlaceListener;
+import cf.dejf.DEJFChestHoppers.listeners.PistonListener;
+import cf.dejf.DEJFChestHoppers.util.CommandExecutor;
+import cf.dejf.DEJFChestHoppers.util.ConfigurationManager;
+import cf.dejf.DEJFChestHoppers.util.Util;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -18,20 +22,19 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
 
-import java.time.temporal.ValueRange;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static cf.dejf.DEJFChestHoppers.Util.isChunkLoaded;
+import static cf.dejf.DEJFChestHoppers.util.Util.isChunkLoaded;
 
 
 public class DEJFChestHoppers extends JavaPlugin {
     // Basic Plugin Info
     private DEJFChestHoppers plugin;
-    private Logger log;
-    private String pluginName;
+    public Logger log;
+    public String pluginName;
     private PluginDescriptionFile pdf;
     // Plugin Specific
     public static List<Location> hopperList = new ArrayList<>();
@@ -54,6 +57,8 @@ public class DEJFChestHoppers extends JavaPlugin {
                 Event.Priority.Low, this);
         this.getServer().getPluginManager().registerEvent(Event.Type.BLOCK_BREAK, new BlockBreakListener(),
                 Event.Priority.Low, this);
+        this.getServer().getPluginManager().registerEvent(Event.Type.BLOCK_PISTON_RETRACT, new PistonListener(),
+                Event.Priority.Low, this);
         this.getCommand("hoppers").setExecutor(new CommandExecutor());
 
         instance = this;
@@ -61,30 +66,27 @@ public class DEJFChestHoppers extends JavaPlugin {
 
         BukkitScheduler scheduler = getServer().getScheduler();
         scheduler.scheduleSyncRepeatingTask(this, () -> {
-            //Iterate over entities as there are more likely to be more entities then hoppers
+            //Iterate over entities as there are more likely to be more entities than hoppers
             //Scan Worlds
-            for (World world : Bukkit.getServer().getWorlds()) {
+            for(World world : Bukkit.getServer().getWorlds()) {
                 //Scan all entities in world
-                for (Entity entity : world.getEntities()) {
+                for(Entity entity : world.getEntities()) {
 
                     if(entity instanceof StorageMinecart) {
-
 
                         Inventory minecartInventory = ((StorageMinecart) entity).getInventory();
                         ItemStack[] minecartInventoryContents = minecartInventory.getContents();
 
                         //Scan all hopper lists
-                        for (int i = 0; i < hopperList.size(); i++) {
+                        for(int i = 0; i < hopperList.size(); i++) {
                             Location hopperLocation = hopperList.get(i).clone();
-                            Block chestBlock = hopperLocation.getBlock();
-                            Chest chest = (Chest) chestBlock.getState();
-                            Inventory chestInventory = chest.getInventory();
-                            ItemStack[] chestInventoryContents = chestInventory.getContents();
-
-                            if (hopperLocation.getWorld() != entity.getWorld())
+                            if(hopperLocation.getWorld() != entity.getWorld())
                                 continue; //Don't check entities against hoppers in a different world
+                            Block chestBlock = hopperLocation.getBlock();
+                            if(hopperLocation.getY() == 0)
+                                continue; //A hopper chest can't exist on layer 0 as no block can go below it
                             Block ironBlock = hopperLocation.getBlock().getRelative(0, -1, 0);
-                            if (ironBlock.getType() != Material.IRON_BLOCK || chestBlock.getType() != Material.CHEST) {
+                            if(ironBlock.getType() != Material.IRON_BLOCK || chestBlock.getType() != Material.CHEST) {
                                 log.info("[" + pluginName + "] Removing hopper at " + chestBlock.getX() + " " +
                                         chestBlock.getY() + " " + chestBlock.getZ() +
                                         " as it isn't a chest, or doesn't have an iron block below it.");
@@ -92,14 +94,11 @@ public class DEJFChestHoppers extends JavaPlugin {
                                 ConfigurationManager.save("hoppers");
                                 continue;
                             }
+                            Chest chest = (Chest) chestBlock.getState();
+                            Inventory chestInventory = chest.getInventory();
+                            ItemStack[] chestInventoryContents = chestInventory.getContents();
 
-                            int x = hopperLocation.getBlockX() - entity.getLocation().getBlockX();
-                            int y = hopperLocation.getBlockY() - entity.getLocation().getBlockY();
-                            int z = hopperLocation.getBlockZ() - entity.getLocation().getBlockZ();
-
-                            if(ValueRange.of(-1, 1).isValidIntValue(x)
-                                    && ValueRange.of(-1, 1).isValidIntValue(y*10)
-                                    && ValueRange.of(-1, 1).isValidIntValue(z)) {
+                            if(hopperLocation.distance(entity.getLocation()) <= 2) {
                                 for(ItemStack itemStack : minecartInventoryContents) {
                                     if(itemStack != null) {
                                         if(Util.hasFreeSpace(chestInventory, itemStack)) {
@@ -110,33 +109,22 @@ public class DEJFChestHoppers extends JavaPlugin {
                                 }
                             }
 
-                            if(ValueRange.of(-1, 1).isValidIntValue(x*10)
-                                    && ValueRange.of(1, 2).isValidIntValue(y)
-                                    && ValueRange.of(-1, 1).isValidIntValue(z*10)) {
-                                for(ItemStack itemStack : chestInventoryContents) {
-                                    if(itemStack != null) {
-                                        if(Util.hasFreeSpace(minecartInventory, itemStack)) {
-                                            minecartInventory.addItem(itemStack);
-                                            chestInventory.removeItem(itemStack);
-                                        }
-                                    }
-                                }
-                            }
                         }
+                        return;
 
                     } else if(entity instanceof Item) {
 
                         //Scan all hopper lists
-                        for (int i = 0; i < hopperList.size(); i++) {
+                        for(int i = 0; i < hopperList.size(); i++) {
                             Location hopperLocation = hopperList.get(i).clone();
-                            if (hopperLocation.getWorld() != entity.getWorld())
+                            if(hopperLocation.getWorld() != entity.getWorld())
                                 continue; //Don't check entities against hoppers in a different world
-                            if (!isChunkLoaded(hopperLocation)) continue; //If chunk isn't loaded, skip
+                            if(!isChunkLoaded(hopperLocation)) continue; //If chunk isn't loaded, skip
                             Block chestBlock = hopperLocation.getBlock();
-                            if (hopperLocation.getY() == 0)
+                            if(hopperLocation.getY() == 0)
                                 continue; //A hopper chest can't exist on layer 0 as no block can go below it
                             Block ironBlock = hopperLocation.getBlock().getRelative(0, -1, 0);
-                            if (ironBlock.getType() != Material.IRON_BLOCK || chestBlock.getType() != Material.CHEST) {
+                            if(ironBlock.getType() != Material.IRON_BLOCK || chestBlock.getType() != Material.CHEST) {
                                 log.info("[" + pluginName + "] Removing hopper at " + chestBlock.getX() + " " +
                                         chestBlock.getY() + " " + chestBlock.getZ() +
                                         " as it isn't a chest, or doesn't have an iron block below it.");
@@ -146,12 +134,12 @@ public class DEJFChestHoppers extends JavaPlugin {
                             }
                             Chest chest = (Chest) chestBlock.getState();
                             Inventory chestInventory = chest.getInventory();
-                            if (entity.getLocation().distance(chestBlock.getLocation().add(0.5, 1, 0.5)) < 0.5) {
+                            if(entity.getLocation().distance(chestBlock.getLocation().add(0, 1, 0)) < 1) {
                                 //Item Info
                                 Item itemToBeSucked = (Item) entity;
                                 ItemStack naughtyStack = itemToBeSucked.getItemStack();
                                 //Add item to chest
-                                if (Util.hasFreeSpace(chestInventory, naughtyStack)) {
+                                if(Util.hasFreeSpace(chestInventory, naughtyStack)) {
                                     chestInventory.addItem(naughtyStack);
                                     entity.remove();
                                 }

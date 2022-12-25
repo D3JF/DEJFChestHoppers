@@ -1,5 +1,6 @@
-package cf.dejf.DEJFChestHoppers;
+package cf.dejf.DEJFChestHoppers.util;
 
+import cf.dejf.DEJFChestHoppers.DEJFChestHoppers;
 import org.bukkit.util.config.Configuration;
 
 import java.io.File;

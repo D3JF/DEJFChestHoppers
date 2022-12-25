@@ -1,7 +1,7 @@
 package cf.dejf.DEJFChestHoppers.listeners;
 
 import cf.dejf.DEJFChestHoppers.DEJFChestHoppers;
-import cf.dejf.DEJFChestHoppers.ConfigurationManager;
+import cf.dejf.DEJFChestHoppers.util.ConfigurationManager;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -10,24 +10,29 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockListener;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class BlockBreakListener extends BlockListener {
 
     @Override
     public void onBlockBreak(BlockBreakEvent event) {
-        if (event.isCancelled())
+        if(event.isCancelled())
             return;
         Player player = event.getPlayer();
         Block block = event.getBlock();
         Block blockBelow = event.getBlock().getWorld().getBlockAt(event.getBlock().getX(), event.getBlock().getY() - 1, event.getBlock().getZ());
         Block blockAbove = event.getBlock().getWorld().getBlockAt(event.getBlock().getX(), event.getBlock().getY() + 1, event.getBlock().getZ());
 
-        //TODO: Improve the check to consult with our hopper list first.
-
-        if (block.getType() == Material.CHEST && blockBelow.getType() == Material.IRON_BLOCK) {
+        if(block.getType() == Material.CHEST && blockBelow.getType() == Material.IRON_BLOCK) {
+            if(!DEJFChestHoppers.hopperList.contains(block.getLocation()))
+                return;
             player.sendMessage(ChatColor.YELLOW + "Hopper destroyed!");
             removeBlock(block.getLocation());
             ConfigurationManager.save("hoppers");
-        } else if (block.getType() == Material.IRON_BLOCK && blockAbove.getType() == Material.CHEST) {
+        } else if(block.getType() == Material.IRON_BLOCK && blockAbove.getType() == Material.CHEST) {
+            if(!DEJFChestHoppers.hopperList.contains(blockAbove.getLocation()))
+                return;
             player.sendMessage(ChatColor.YELLOW + "Hopper destroyed!");
             removeBlock(blockAbove.getLocation());
             ConfigurationManager.save("hoppers");
@@ -35,13 +40,18 @@ public class BlockBreakListener extends BlockListener {
     }
 
     public void removeBlock(Location location) {
-        for (int i = 0; i < DEJFChestHoppers.hopperList.size(); i++) {
-            Location location2 = DEJFChestHoppers.hopperList.get(i);
-            if (location.getWorld() == location2.getWorld() && location.getBlockX() == location2.getBlockX() && location.getBlockY() == location2.getBlockY() && location.getBlockZ() == location2.getBlockZ()) {
-                DEJFChestHoppers.hopperList.remove(i);
-                ConfigurationManager.save("hoppers");
+        List<Location> foundHoppers = new ArrayList<>();
+        for(int i = 0; i < DEJFChestHoppers.hopperList.size(); i++) {
+            Location hopperLocation = DEJFChestHoppers.hopperList.get(i);
+            if (location.getWorld() == hopperLocation.getWorld()
+                    && location.getBlockX() == hopperLocation.getBlockX()
+                    && location.getBlockY() == hopperLocation.getBlockY()
+                    && location.getBlockZ() == hopperLocation.getBlockZ()) {
+                foundHoppers.add(hopperLocation);
             }
         }
+        DEJFChestHoppers.hopperList.removeAll(foundHoppers);
+        ConfigurationManager.save("hoppers");
     }
 
 }
